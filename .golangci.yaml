@@ -1,0 +1,30 @@
+run:
+  skip-dirs:
+    - vendor
+  timeout: 30m
+  skip-files: [ ]
+  tests: false
+
+issues:
+  max-same-issues: 0
+  exclude-rules: [ ]
+
+linters:
+  disable-all: true
+  enable:
+    - goimports
+    - gofmt
+    - ineffassign
+    - staticcheck
+    - unused
+
+linters-settings: # please keep this alphabetized
+  staticcheck:
+    go: "1.17"
+    checks: [
+      "all",
+    ]
+  goimports:
+    local-prefixes: github.com/kom0055/gclone
+  unused:
+    go: "1.17"
