@@ -29,7 +29,7 @@ func newSshCloner(user, permFile, passwd string) (Cloner, error) {
 
 func (s *sshCloner) Clone(ctx context.Context, localPath, repoUrl string) error {
 	s.ch <- struct{}{}
-	log.Println("cloning", repoUrl, "start")
+	log.Println("cloning", repoUrl, localPath, "start")
 	defer func() {
 		<-s.ch
 		log.Println("cloning", repoUrl, "done")

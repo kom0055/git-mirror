@@ -26,11 +26,11 @@ func newHttpCloner(user, token string) (Cloner, error) {
 }
 
 func (s *httpCloner) Clone(ctx context.Context, localPath, repoUrl string) error {
-	log.Println("cloning", repoUrl, "start")
 	s.ch <- struct{}{}
+	log.Println("cloning", repoUrl, localPath, "start")
 	defer func() {
-		log.Println("cloning", repoUrl, "done")
 		<-s.ch
+		log.Println("cloning", repoUrl, "done")
 	}()
 	repo, err := git.PlainOpen(localPath)
 	if err != nil {
