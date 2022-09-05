@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -38,9 +39,10 @@ func (s *httpCloner) Clone(ctx context.Context, localPath, repoUrl string) error
 			return err
 		}
 		repo, err = git.PlainCloneContext(ctx, localPath, isBare, &git.CloneOptions{
-			URL:  repoUrl,
-			Auth: s.auth,
-			Tags: git.AllTags,
+			URL:      repoUrl,
+			Auth:     s.auth,
+			Tags:     git.AllTags,
+			Progress: os.Stdout,
 		})
 		if err != nil {
 			if errors.As(err, &git.ErrRepositoryNotExists) {
@@ -51,9 +53,10 @@ func (s *httpCloner) Clone(ctx context.Context, localPath, repoUrl string) error
 	}
 
 	if err = repo.FetchContext(ctx, &git.FetchOptions{
-		Auth:  s.auth,
-		Tags:  git.AllTags,
-		Force: true,
+		Auth:     s.auth,
+		Tags:     git.AllTags,
+		Force:    true,
+		Progress: os.Stdout,
 	}); err != nil && !errors.As(err, &git.NoErrAlreadyUpToDate) {
 		return err
 	}
