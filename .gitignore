@@ -27,3 +27,5 @@ testbin/*
 *~
 vendor
 VERSION
+
+.DS_Store
