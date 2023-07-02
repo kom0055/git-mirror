@@ -1,9 +1,8 @@
-package clone
+package utils
 
 import (
-	"net"
-
 	"golang.org/x/crypto/ssh"
+	"net"
 )
 
 func IgnoreHostKeyCB(_ string, _ net.Addr, _ ssh.PublicKey) error {

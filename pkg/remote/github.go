@@ -2,132 +2,117 @@ package remote
 
 import (
 	"context"
-	"log"
-	"sync"
-
+	"fmt"
+	"github.com/kom0055/go-flinx"
 	"golang.org/x/oauth2"
+	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v47/github"
 
 	"github.com/kom0055/gclone/pkg/utils"
 )
 
-type ghRemote struct {
-	client *github.Client
-}
+var (
+	privateVisibility = "private"
+)
 
-func newGhImpl(ctx context.Context, token string) (Remote, error) {
+func newGhImpl(ctx context.Context, token, orgName, proto string) (Remote, error) {
 	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{
 		AccessToken: token,
 	}))
 
 	client := github.NewClient(tc)
-	return &ghRemote{client: client}, nil
+	org, _, err := client.Organizations.Get(ctx, orgName)
+	if err != nil || org == nil {
+		return nil, fmt.Errorf("failed to get org %s: %v", orgName, err)
+	}
+	return &ghRemote{
+		proto:  proto,
+		org:    org,
+		client: client,
+	}, nil
 }
 
-func (r *ghRemote) FetchAllProjects(ctx context.Context) []*Project {
-
-	mu := sync.Mutex{}
-	allProjects := []*Project{}
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-	utils.GoRoutine(func() {
-		defer wg.Done()
-		repos, _, err := r.client.Repositories.List(ctx, "", nil)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		mu.Lock()
-		defer mu.Unlock()
-		allProjects = append(allProjects, FromGithubRepos(repos...)...)
-
-	})
-
-	wg.Add(1)
-	utils.GoRoutine(func() {
-		defer wg.Done()
-		projects, err := r.lisAllOrgProjects(ctx)
-		if err != nil {
-			return
-		}
-		mu.Lock()
-		defer mu.Unlock()
-		allProjects = append(allProjects, projects...)
-	})
-	wg.Wait()
-	set := utils.NewAnySet[string]()
-	res := []*Project{}
-	for i := range allProjects {
-		project := allProjects[i]
-		if set.Has(project.SSHUrl) {
-			continue
-		}
-		set.Insert(project.SSHUrl)
-		res = append(res, project)
-	}
-	return res
+type ghRemote struct {
+	proto  string
+	org    *github.Organization
+	client *github.Client
 }
 
-func (r *ghRemote) lisAllOrgProjects(ctx context.Context) ([]*Project, error) {
-	orgs, _, err := r.client.Organizations.List(ctx, "", nil)
-	if err != nil {
-		return nil, err
-	}
+func (r *ghRemote) FetchAllProjects(ctx context.Context) ([]*Project, error) {
 
-	mu := sync.Mutex{}
-	allProjects := []*Project{}
-	wg := sync.WaitGroup{}
-	wg.Add(len(orgs))
-	for i := range orgs {
-		org := orgs[i]
-		utils.GoRoutine(func() {
-			defer wg.Done()
-
-			projects, err := r.lisAllTeamProjects(ctx, *org.ID, *org.Name)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			mu.Lock()
-			defer mu.Unlock()
-			allProjects = append(allProjects, projects...)
+	allGithubProjects := []*github.Repository{}
+	perPage := 50
+	for i := 0; ; i++ {
+		projects, _, err := r.client.Repositories.List(ctx, "", &github.RepositoryListOptions{
+			Sort:      "created",
+			Direction: "asc",
+			ListOptions: github.ListOptions{
+				Page:    i,
+				PerPage: perPage,
+			},
 		})
-
+		if err != nil {
+			return nil, err
+		}
+		if len(projects) == 0 {
+			break
+		}
+		allGithubProjects = append(allGithubProjects, projects...)
 	}
-	wg.Wait()
+	allProjects := flinx.ToSlice(flinx.Select(r.fromGithubRepo)(flinx.DistinctBy(func(t *github.Repository) int64 {
+		return *t.ID
+	})(flinx.FromSlice(allGithubProjects))))
 
 	return allProjects, nil
+
 }
 
-func (r *ghRemote) lisAllTeamProjects(ctx context.Context, orgId int64, orgName string) ([]*Project, error) {
-	teams, _, err := r.client.Teams.ListTeams(ctx, orgName, nil)
+func (r *ghRemote) GetProjectUrl(ctx context.Context, project *Project) (string, error) {
+	orgName := *r.org.Login
+	repoName := strings.ReplaceAll(strings.ToLower(fmt.Sprintf("%s-%s", project.Namespace, project.Name)), " ", "-")
+	repo, resp, err := r.client.Repositories.Get(ctx, orgName, repoName)
 	if err != nil {
-		return nil, err
-	}
+		if resp == nil || resp.StatusCode != http.StatusNotFound {
+			return "", err
 
-	mu := sync.Mutex{}
-	allProjects := []*Project{}
-	wg := sync.WaitGroup{}
-
-	wg.Add(len(teams))
-	for i := range teams {
-		team := teams[i]
-		utils.GoRoutine(func() {
-			defer wg.Done()
-			repos, _, err := r.client.Teams.ListTeamReposByID(ctx, orgId, *team.ID, nil)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			mu.Lock()
-			defer mu.Unlock()
-			allProjects = append(allProjects, FromGithubRepos(repos...)...)
+		}
+		repo, _, err = r.client.Repositories.Create(ctx, orgName, &github.Repository{
+			Name:       &repoName,
+			Visibility: &privateVisibility,
 		})
+		if err != nil {
+			return "", err
+		}
 	}
-	wg.Wait()
-	return allProjects, nil
 
+	switch r.proto {
+	case utils.HttpProto, utils.HttpsProto:
+		return *repo.CloneURL, nil
+	case utils.SshProto, utils.GitProto:
+		return *repo.SSHURL, nil
+
+	}
+	return "", fmt.Errorf("unknown proto: %s", r.proto)
+
+}
+
+func (r *ghRemote) fromGithubRepo(repo *github.Repository) *Project {
+	var (
+		repoUrl string
+	)
+	switch r.proto {
+	case utils.HttpProto, utils.HttpsProto:
+		repoUrl = *repo.CloneURL
+	case utils.SshProto, utils.GitProto:
+		repoUrl = *repo.SSHURL
+
+	}
+	return &Project{
+		Name:         *repo.Name,
+		Namespace:    *repo.Owner.Login,
+		URL:          repoUrl,
+		RelativePath: *repo.FullName,
+	}
 }

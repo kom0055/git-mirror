@@ -2,49 +2,24 @@ package remote
 
 import (
 	"context"
-
-	"github.com/google/go-github/v47/github"
-	"github.com/xanzy/go-gitlab"
 )
 
 type Remote interface {
-	FetchAllProjects(ctx context.Context) []*Project
+	FetchAllProjects(ctx context.Context) ([]*Project, error)
+	GetProjectUrl(ctx context.Context, project *Project) (string, error)
 }
 
-func NewRemote(ctx context.Context, glUrl, token string) (Remote, error) {
+func NewRemote(ctx context.Context, glUrl, token, org, proto string) (Remote, error) {
 	if len(glUrl) == 0 {
-		return newGhImpl(ctx, token)
+		return newGhImpl(ctx, token, org, proto)
 	}
 
-	return newGlImpl(glUrl, token)
+	return newGlImpl(ctx, glUrl, token, org, proto)
 }
 
 type Project struct {
 	Name         string
-	SSHUrl       string
+	Namespace    string
+	URL          string
 	RelativePath string
-}
-
-func FromGitlabProjects(glProjects ...*gitlab.Project) []*Project {
-	projects := make([]*Project, len(glProjects))
-	for i := range glProjects {
-		projects[i] = &Project{
-			Name:         glProjects[i].Name,
-			SSHUrl:       glProjects[i].SSHURLToRepo,
-			RelativePath: glProjects[i].PathWithNamespace,
-		}
-	}
-	return projects
-}
-
-func FromGithubRepos(ghRepos ...*github.Repository) []*Project {
-	projects := make([]*Project, len(ghRepos))
-	for i := range ghRepos {
-		projects[i] = &Project{
-			Name:         *ghRepos[i].Name,
-			SSHUrl:       *ghRepos[i].SSHURL,
-			RelativePath: *ghRepos[i].FullName,
-		}
-	}
-	return projects
 }

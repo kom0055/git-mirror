@@ -1,14 +1,12 @@
 package cmd
 
 import (
+	"github.com/spf13/cobra"
 	"log"
 	"os"
-	"path/filepath"
 
-	"github.com/spf13/cobra"
-
-	"github.com/kom0055/gclone/pkg/config"
 	"github.com/kom0055/gclone/pkg/options"
+	"github.com/kom0055/gclone/pkg/utils"
 )
 
 var (
@@ -23,10 +21,16 @@ var rootCmd = &cobra.Command{
 to sync all available repos: gclone --sync-from-remote --remote-type=gh https://github.com `,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := option.Complete(); err != nil {
-			log.Fatalln(err)
+		if err := os.MkdirAll(utils.DefaultTmpPath, 0755); err != nil {
+			log.Fatalf("failed to create tmp dir: %v\n", err)
 		}
-		if err := option.Run(cmd.Context(), args); err != nil {
+		defer func() {
+			_ = os.RemoveAll(utils.DefaultTmpPath)
+		}()
+		//if err := option.Complete(); err != nil {
+		//	log.Fatalf("failed to complete option: %v\n", err)
+		//}
+		if err := option.Mirror(cmd.Context()); err != nil {
 			log.Fatalln(err)
 		}
 
@@ -44,15 +48,18 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().StringVar(&option.Source.EcdsaPemFile, "source-ecdsa", "", "ecdsa pem file")
+	rootCmd.PersistentFlags().StringVar(&option.Source.EcdsaPemFilePasswd, "source-ecdsa-passwd", "", "ecdsa pem file passwd")
+	rootCmd.PersistentFlags().StringVar(&option.Source.RemoteGitlabAddr, "source-remote-gitlab-addr", "", "remote gitlab addr")
+	rootCmd.PersistentFlags().StringVar(&option.Source.User, "source-user", "", "user name")
+	rootCmd.PersistentFlags().StringVar(&option.Source.Token, "source-token", "", "token or private key")
+	rootCmd.PersistentFlags().StringVar(&option.Source.Proto, "source-proto", "", "proto: git, ssh, http or https")
 
-	rootCmd.PersistentFlags().StringVar(&option.CfgFilePath, "config", filepath.Join(config.HomeDir, config.CfgFilePath), "config file path")
-	rootCmd.PersistentFlags().StringVar(&option.RepoRootPath, "repo-root-path", "", "repo root path")
-	rootCmd.PersistentFlags().StringVar(&option.EcdsaPemFile, "ecdsa", "", "ecdsa pem file")
-	rootCmd.PersistentFlags().StringVar(&option.EcdsaPemFilePasswd, "ecdsa-passwd", "", "ecdsa pem file passwd")
-	rootCmd.PersistentFlags().StringVar(&option.RemoteGitlabAddr, "remote-gitlab-addr", "", "remote gitlab addr")
-	rootCmd.PersistentFlags().BoolVar(&option.SyncFromRemote, "sync-from-remote", false, "sync all repos from remote")
-
-	rootCmd.PersistentFlags().StringVar(&option.User, "user", "", "user name")
-	rootCmd.PersistentFlags().StringVar(&option.Token, "token", "", "token or private key")
+	rootCmd.PersistentFlags().StringVar(&option.Dest.EcdsaPemFile, "dest-ecdsa", "", "ecdsa pem file")
+	rootCmd.PersistentFlags().StringVar(&option.Dest.EcdsaPemFilePasswd, "dest-ecdsa-passwd", "", "ecdsa pem file passwd")
+	rootCmd.PersistentFlags().StringVar(&option.Dest.RemoteGitlabAddr, "dest-remote-gitlab-addr", "", "remote gitlab addr")
+	rootCmd.PersistentFlags().StringVar(&option.Dest.User, "dest-user", "", "user name")
+	rootCmd.PersistentFlags().StringVar(&option.Dest.Token, "dest-token", "", "token or private key")
+	rootCmd.PersistentFlags().StringVar(&option.Dest.Proto, "dest-proto", "", "proto: git, ssh, http or https")
 
 }
