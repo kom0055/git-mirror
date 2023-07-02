@@ -1,4 +1,4 @@
-module github.com/kom0055/gclone
+module github.com/kom0055/git-mirror
 
 go 1.20
 

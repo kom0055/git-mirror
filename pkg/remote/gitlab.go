@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kom0055/gclone/pkg/utils"
+	"github.com/kom0055/git-mirror/pkg/utils"
 )
 
 var (

@@ -48,7 +48,7 @@ find_files() {
 # would have led to no useful error message from gofmt, because the script would
 # have failed before getting to the "echo" in the block below.
 
-find_files | xargs goimports -w -local github.com/kom0055/gclone
+find_files | xargs goimports -w -local github.com/kom0055/git-mirror
 find_files | xargs gofmt -s -d -w
 golangci-lint run -c "${SCRIPT_ROOT}"/.golangci.yaml "${SCRIPT_ROOT}"/...
 find_files | xargs cat | wc -l

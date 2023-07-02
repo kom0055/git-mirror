@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/go-github/v47/github"
 
-	"github.com/kom0055/gclone/pkg/utils"
+	"github.com/kom0055/git-mirror/pkg/utils"
 )
 
 var (

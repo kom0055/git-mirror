@@ -13,9 +13,9 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/kom0055/gclone/pkg/mirror"
-	"github.com/kom0055/gclone/pkg/remote"
-	"github.com/kom0055/gclone/pkg/utils"
+	"github.com/kom0055/git-mirror/pkg/mirror"
+	"github.com/kom0055/git-mirror/pkg/remote"
+	"github.com/kom0055/git-mirror/pkg/utils"
 )
 
 type Option struct {

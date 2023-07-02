@@ -5,7 +5,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 
-	"github.com/kom0055/gclone/pkg/utils"
+	"github.com/kom0055/git-mirror/pkg/utils"
 )
 
 type Cloner interface {

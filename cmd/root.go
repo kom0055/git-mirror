@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/kom0055/gclone/pkg/options"
-	"github.com/kom0055/gclone/pkg/utils"
+	"github.com/kom0055/git-mirror/pkg/options"
+	"github.com/kom0055/git-mirror/pkg/utils"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "gclone",
 	Short: "clone repo to local path or sync all available repos to local path",
-	Long: `to clone repo: gclone https://github.com/kom0055/gclone
+	Long: `to clone repo: gclone https://github.com/kom0055/git-mirror
 to sync all available repos: gclone --sync-from-remote --remote-type=gh https://github.com `,
 
 	Run: func(cmd *cobra.Command, args []string) {

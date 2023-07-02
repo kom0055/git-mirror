@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/kom0055/gclone/cmd"
+import "github.com/kom0055/git-mirror/cmd"
 
 func main() {
 	cmd.Execute()

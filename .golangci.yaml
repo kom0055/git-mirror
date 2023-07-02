@@ -25,6 +25,6 @@ linters-settings: # please keep this alphabetized
       "all",
     ]
   goimports:
-    local-prefixes: github.com/kom0055/gclone
+    local-prefixes: github.com/kom0055/git-mirror
   unused:
     go: "1.17"
