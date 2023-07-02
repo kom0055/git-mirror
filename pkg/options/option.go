@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	multierror "github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/kom0055/gclone/pkg/mirror"
 	"github.com/kom0055/gclone/pkg/remote"
@@ -19,6 +19,7 @@ import (
 )
 
 type Option struct {
+	Worker int
 	Source BasicOpt
 	Dest   BasicOpt
 }
@@ -65,7 +66,7 @@ func (o *Option) Mirror(ctx context.Context) error {
 	}
 
 	errCh := make(chan error, 1000)
-	ctrl := make(chan struct{}, 10)
+	ctrl := make(chan struct{}, o.Worker)
 	utils.GoRoutine(func() {
 		defer close(errCh)
 		defer close(ctrl)
