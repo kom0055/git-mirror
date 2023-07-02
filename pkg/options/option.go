@@ -66,7 +66,11 @@ func (o *Option) Mirror(ctx context.Context) error {
 	}
 
 	errCh := make(chan error, 1000)
-	ctrl := make(chan struct{}, o.Worker)
+	worker := o.Worker
+	if worker < 1 {
+		worker = 1
+	}
+	ctrl := make(chan struct{}, worker)
 	utils.GoRoutine(func() {
 		defer close(errCh)
 		defer close(ctrl)

@@ -30,6 +30,7 @@ func TestClone(t *testing.T) {
 	o := Option{
 		Source: gitlabOpt,
 		Dest:   githubOpt,
+		Worker: 8,
 	}
 	ctx := context.Background()
 	if err := o.Mirror(ctx); err != nil {
@@ -60,6 +61,7 @@ func TestClone2(t *testing.T) {
 		}
 	)
 	o := Option{
+		Worker: 8,
 		Source: gitlabOpt,
 		Dest:   githubOpt,
 	}
