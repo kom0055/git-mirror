@@ -14,9 +14,10 @@ import (
 )
 
 var (
-	sortAsc   = "asc"
-	sortDesc  = "desc"
-	orderById = "id"
+	sortAsc         = "asc"
+	sortDesc        = "desc"
+	orderById       = "id"
+	orderByActivity = "last_activity_at"
 )
 
 func newGlImpl(ctx context.Context, glUrl, token, groupName, proto string) (Remote, error) {
@@ -85,8 +86,8 @@ func (r *glRemote) FetchAllProjects(ctx context.Context) ([]*Project, error) {
 				Page:    i,
 				PerPage: perPage,
 			},
-			Sort:    &sortAsc,
-			OrderBy: &orderById,
+			Sort:    &sortDesc,
+			OrderBy: &orderByActivity,
 		}, gitlab.WithContext(ctx))
 		if err != nil {
 			return nil, err

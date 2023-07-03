@@ -46,8 +46,8 @@ func (r *ghRemote) FetchAllProjects(ctx context.Context) ([]*Project, error) {
 	perPage := 50
 	for i := 0; ; i++ {
 		projects, _, err := r.client.Repositories.List(ctx, "", &github.RepositoryListOptions{
-			Sort:      "created",
-			Direction: "asc",
+			Sort:      "pushed",
+			Direction: "desc",
 			ListOptions: github.ListOptions{
 				Page:    i,
 				PerPage: perPage,
