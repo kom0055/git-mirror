@@ -86,8 +86,8 @@ func (r *glRemote) FetchAllProjects(ctx context.Context) ([]*Project, error) {
 				Page:    i,
 				PerPage: perPage,
 			},
-			Sort:    &sortDesc,
-			OrderBy: &orderByActivity,
+			Sort:    &sortAsc,
+			OrderBy: &orderById,
 		}, gitlab.WithContext(ctx))
 		if err != nil {
 			return nil, err

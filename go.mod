@@ -3,6 +3,7 @@ module github.com/kom0055/git-mirror
 go 1.20
 
 require (
+	gitee.com/openeuler/go-gitee v0.0.0-20220530104019-3af895bc380c
 	github.com/go-git/go-git/v5 v5.7.0
 	github.com/google/go-github/v47 v47.1.0
 	github.com/google/uuid v1.3.0
@@ -19,6 +20,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230626094100-7e9e0395ebec // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
+	github.com/antihax/optional v1.0.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect

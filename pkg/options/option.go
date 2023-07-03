@@ -35,6 +35,7 @@ type BasicOpt struct {
 }
 
 func (o *Option) Mirror(ctx context.Context) error {
+	defer os.RemoveAll(utils.DefaultTmpPath)
 
 	var (
 		source = o.Source
