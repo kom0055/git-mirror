@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -76,16 +77,37 @@ func (o *Option) Mirror(ctx context.Context) error {
 		defer close(errCh)
 		defer close(ctrl)
 		wg := &sync.WaitGroup{}
+		finished := &atomic.Int64{}
 
+		mapMutex := &sync.RWMutex{}
+		processingProjects := map[string]struct{}{}
+		achieves := atomic.Int64{}
+		total := int64(len(projects))
 		for i := range projects {
 			wg.Add(1)
 			ctrl <- struct{}{}
 			project := projects[i]
+			id := project.Identity()
+			func() {
+				mapMutex.Lock()
+				defer mapMutex.Unlock()
+				processingProjects[id] = struct{}{}
+			}()
 			utils.GoRoutine(func() {
+				defer func() {
+					delete(processingProjects, id)
+					processingProjectArr := make([]string, 0, len(processingProjects))
+					for name := range processingProjects {
+						processingProjectArr = append(processingProjectArr, name)
+					}
+					log.Printf("total: %v, remain: %v, processing: %v, %v", total, total-achieves.Add(1), len(processingProjects), processingProjectArr)
+				}()
 				defer func() {
 					<-ctrl
 				}()
 				defer wg.Done()
+				defer finished.Add(1)
+
 				ep, err := transport.NewEndpoint(project.URL)
 				if err != nil {
 					errCh <- fmt.Errorf("parse ssh url %s failed: %s", project.URL, err)

@@ -2,6 +2,7 @@ package remote
 
 import (
 	"context"
+	"fmt"
 )
 
 type Remote interface {
@@ -22,4 +23,8 @@ type Project struct {
 	Namespace    string
 	URL          string
 	RelativePath string
+}
+
+func (p Project) Identity() string {
+	return fmt.Sprintf("%s/%s", p.Namespace, p.Name)
 }
